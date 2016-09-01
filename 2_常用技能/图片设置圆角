@@ -1,0 +1,54 @@
+#图片变成圆形
+
+这里有四种方式，显示图片设置为圆角的
+
+## 1. `layer`属性设置圆角
+可以任意设置圆角的大小，但是比较耗性能。而且如果你还需要设置阴影，就不能使用layer的shadow去设置了。在设置圆角时需要设置`masksToBounds`属性，导致超出view的可视区域时会被截掉。
+
+```objective-c
+UIImageView *imageView = [[UIImageView alloc] initWithImage:img];
+    
+imageView.layer.masksToBounds = YES;
+imageView.layer.cornerRadius = 5.0f;
+```
+
+## 2. 给`view`添加`mask layer`
+
+```objective-c
+UIBezierPath *cycle = [UIBezierPath bezierPathWithRoundedRect:view.bounds cornerRadius:view.bounds.size.height/2.0];
+CAShapeLayer *cycleLayer = [CAShapeLayer layer];
+cycleLayer.path = cycle.CGPath;
+    
+UIImageView *imageView = [[UIImageView alloc] initWithImage:img];
+imageView.layer.mask = cycleLayer;
+```
+
+## 3. 剪切图片 `CGContextAddEllipseInRect`
+
+```objective-c
+UIGraphicsBeginImageContextWithOptions(img.size, NO, 0);
+CGContextRef ctr = UIGraphicsGetCurrentContext();
+CGContextAddEllipseInRect(ctr, view.bounds);
+CGContextClip(ctr);
+[img drawInRect:view.bounds];
+img =  UIGraphicsGetImageFromCurrentImageContext();
+UIGraphicsEndImageContext();
+    
+UIImageView *imageView = [[UIImageView alloc] initWithImage:img];
+```
+
+
+## 4. 继承`UIImageView`，然后重写`drawRect`方法
+```
+- (void)drawRect:(CGRect)rect {
+    CGRect bounds = self.bounds;
+    [[UIColor lightGrayColor] set];
+    UIRectFill(bounds);
+
+    [[UIBezierPath bezierPathWithRoundedRect:rect cornerRadius:rect.size.height/2.0] addClip];
+
+    [self.image drawInRect:bounds];
+}
+```
+
+
